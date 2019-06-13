@@ -18,29 +18,33 @@ func NewBaseJsonBean() *BaseJsonBean {
 }
 
 func loginTask(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("loginTask is running...", req.Method)
+	currentTime:=time.Now().String()
+	fmt.Println(currentTime, "\nloginTask is running...", req.Method)
 	//模拟延时
 	time.Sleep(time.Second * 2)
 
 	//获取客户端通过GET/POST方式传递的参数
 	req.ParseForm()
-	param_userName, found1 := req.Form["userName"]
-	param_password, found2 := req.Form["password"]
+	paramUserNames, foundUserName := req.Form["userName"]
+	paramPasswords, foundPassword := req.Form["password"]
 
-	fmt.Println("Http info:", req.Method,"req.Form:", req.Form, "req.Body:", req.Body, "req.Header:", req.Header, "\n req.PostForm:", req.PostForm)
+	fmt.Println(currentTime, "\nHttp info:", req.Method,"\n req.Form:", req.Form, "\n req.Body:", req.Body, "\n req.Header:", req.Header, "\n req.PostForm:", req.PostForm)
+
+	fmt.Fprint(w, "Http info:", req.Method,"\n req.Form:", req.Form, "\n req.Body:", req.Body, "\n req.Header:", req.Header, "\n req.PostForm:", req.PostForm)
+
 
 	userName := ""
 	password := ""
-
-	if !(found1 && found2) {
+	
+	if !(foundUserName && foundPassword) {
 		//查看格式是否是mutipartform, 需要用ParseMultipartForm的方式来届时
 		req.ParseMultipartForm(1024)
-		fmt.Println("ParseMultipartForm", req.Form,req.MultipartForm.Value);
-		param_userName, found1 = req.Form["userName"]
-		param_password, found2 = req.Form["password"]
-		if !(found1 && found2) {
+		fmt.Println(currentTime,"\nParseMultipartForm", req.Form,req.MultipartForm.Value)
+		paramUserNames, foundUserName = req.Form["userName"]
+		paramPasswords, foundPassword = req.Form["password"]
+		if !(foundUserName && foundPassword) {
 			//查看数据是否存放在header,一般不建议账号密码存放在header。
-			if (len(req.Header.Get("userName")) <= 0 || len(req.Header.Get("password")) <= 0) {
+			if len(req.Header.Get("userName")) <= 0 || len(req.Header.Get("password")) <= 0 {
 				fmt.Fprint(w, "have no userName or password", "\n")
 				return
 			} else {
@@ -50,8 +54,8 @@ func loginTask(w http.ResponseWriter, req *http.Request) {
 			}
 		}else{
 			//数据放在body上上传
-			userName = param_userName[0]
-			password = param_password[0]
+			userName = paramUserNames[0]
+			password = paramPasswords[0]
 			fmt.Fprint(w, "get info on body with mutipart/form:", req.Form, "\n")
 		}
 	} else {
@@ -61,14 +65,14 @@ func loginTask(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprint(w, "get info on body:", req.Form, "\n")
 		}
 		//数据放在body上上传
-		userName = param_userName[0]
-		password = param_password[0]
+		userName = paramUserNames[0]
+		password = paramPasswords[0]
 	}
 
 	result := NewBaseJsonBean()
 
 	s := "userName:" + userName + ",password:" + password
-	fmt.Println("login info:",s, "\n")
+	fmt.Println(currentTime,"\nlogin info:",s, "\n")
 
 	if userName == "alvin" && password == "123456" {
 		result.Code = 100
@@ -86,11 +90,11 @@ func loginTask(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	go func() {
-		for i:=0;i<10;i++ {
-		fmt.Println("test go func", i)
-		}
-	}()
+	//go func() {
+	//	for i:=0;i<10;i++ {
+	//	fmt.Println("test go func", i)
+	//	}
+	//}()
 	fmt.Println("start:")
 	http.HandleFunc("/login", loginTask)
 	http.ListenAndServe("10.10.18.60:8001", nil)
